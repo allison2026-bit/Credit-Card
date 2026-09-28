@@ -3,26 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { User } from 'firebase/auth';
+import React, { useState, useMemo } from 'react';
 import {
   Search,
   Download,
-  ExternalLink,
   CheckCircle2,
   AlertTriangle,
   Plus,
-  RefreshCw,
-  LogOut,
-  FileSpreadsheet,
-  ArrowUpRight,
   SlidersHorizontal,
   Copy,
   X,
 } from 'lucide-react';
 import {
   CREDIT_CARDS,
-  AUDIT_ISSUES,
   INITIAL_BENEFIT_TRACKERS,
   INITIAL_SPEND_CAP_TRACKERS,
   SPEND_CATEGORY_GUIDE,
@@ -31,17 +24,8 @@ import {
   SpendCapTrackerItem,
 } from './data/creditCards';
 import {
-  initAuth,
-  googleSignIn,
-  getAccessToken,
-  logout,
-} from './lib/googleAuth';
-import {
-  createCreditCardTrackerSheet,
-  updateExistingTrackerSheet,
   exportCardsToCSV,
   copySheetsTSVToClipboard,
-  CreatedSheetInfo,
 } from './lib/googleSheetsService';
 
 type ActiveSection = 'audit-table' | 'benefit-tracker' | 'spend-caps' | 'category-guide';
@@ -74,36 +58,11 @@ export default function App() {
   const [newBenefitMax, setNewBenefitMax] = useState<string>('50');
   const [newBenefitNotes, setNewBenefitNotes] = useState<string>('');
 
-  // Google Auth & Sheets State
-  const [user, setUser] = useState<User | null>(null);
-  const [needsAuth, setNeedsAuth] = useState<boolean>(true);
-  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
-  const [isSheetBusy, setIsSheetBusy] = useState<boolean>(false);
-  const [createdSheet, setCreatedSheet] = useState<CreatedSheetInfo | null>(null);
-  const [customSheetTitle, setCustomSheetTitle] = useState<string>(
-    '美卡權益勘誤與年度福利追蹤表 (2026-2027)'
-  );
+  // Action Banner State
   const [sheetActionBanner, setSheetActionBanner] = useState<{
     type: 'success' | 'info' | 'error';
     message: string;
   } | null>(null);
-
-  // Mandatory Confirmation Dialog State before mutating an existing Google Sheet
-  const [isConfirmUpdateModalOpen, setIsConfirmUpdateModalOpen] = useState<boolean>(false);
-
-  useEffect(() => {
-    const unsubscribe = initAuth(
-      (authedUser) => {
-        setUser(authedUser);
-        setNeedsAuth(false);
-      },
-      () => {
-        setUser(null);
-        setNeedsAuth(true);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
 
   // Filtered Cards
   const filteredCards = useMemo(() => {
@@ -171,38 +130,6 @@ export default function App() {
   }, [cards, trackers]);
 
   // Handlers
-  const handleGoogleLogin = async () => {
-    setIsLoggingIn(true);
-    setSheetActionBanner(null);
-    try {
-      const result = await googleSignIn();
-      if (result?.user && result?.accessToken) {
-        setUser(result.user);
-        setNeedsAuth(false);
-        setSheetActionBanner({
-          type: 'success',
-          message: 'Google 帳號授權成功！現在可點擊「建立全新 4 分頁 Google Sheet」直接生成雲端試算表。',
-        });
-      } else if (result?.cancelled) {
-        setSheetActionBanner({
-          type: 'info',
-          message:
-            '登入視窗已關閉。如需自動建立雲端試算表，請再次點擊「Sign in with Google」完成授權，或直接點擊「複製試算表內容」貼上至 Google Sheets。',
-        });
-      } else if (result?.errorMessage) {
-        setSheetActionBanner({
-          type: 'error',
-          message: result.errorMessage,
-        });
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Google 登入未完成，請再試一次。';
-      setSheetActionBanner({ type: 'error', message: msg });
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
   const handleCopySheetsTSV = async () => {
     try {
       await copySheetsTSVToClipboard(
@@ -221,107 +148,6 @@ export default function App() {
         type: 'error',
         message: '複製到剪貼簿失敗，請改用「下載 CSV」按鈕匯入。',
       });
-    }
-  };
-
-  const handleGoogleLogout = async () => {
-    await logout();
-    setUser(null);
-    setNeedsAuth(true);
-  };
-
-  const handleCreateNewGoogleSheet = async () => {
-    setSheetActionBanner(null);
-    let token = await getAccessToken();
-
-    if (!token) {
-      setIsLoggingIn(true);
-      const result = await googleSignIn();
-      setIsLoggingIn(false);
-
-      if (result?.cancelled) {
-        setSheetActionBanner({
-          type: 'info',
-          message:
-            '登入視窗已關閉。請完成 Google 授權以建立雲端試算表，或點擊「複製試算表內容」/「下載 CSV」。',
-        });
-        return;
-      }
-
-      if (!result?.accessToken || !result?.user) {
-        setSheetActionBanner({
-          type: 'error',
-          message: result?.errorMessage || '尚未完成 Google 授權，請再試一次。',
-        });
-        return;
-      }
-
-      token = result.accessToken;
-      setUser(result.user);
-      setNeedsAuth(false);
-    }
-
-    setIsSheetBusy(true);
-    try {
-      const info = await createCreditCardTrackerSheet(
-        token,
-        cards,
-        trackers,
-        spendCaps,
-        SPEND_CATEGORY_GUIDE,
-        customSheetTitle
-      );
-      setCreatedSheet(info);
-      setSheetActionBanner({
-        type: 'success',
-        message: `已成功在您的 Google 雲端硬碟建立 4 分頁追蹤表：「${info.title}」！`,
-      });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : '建立 Google Sheet 時發生錯誤';
-      setSheetActionBanner({ type: 'error', message: msg });
-      if (msg.includes('401') || msg.includes('403')) {
-        setNeedsAuth(true);
-      }
-    } finally {
-      setIsSheetBusy(false);
-    }
-  };
-
-  const handleConfirmUpdateExistingSheet = async () => {
-    if (!createdSheet) return;
-    setIsConfirmUpdateModalOpen(false);
-    setSheetActionBanner(null);
-
-    const token = await getAccessToken();
-    if (!token) {
-      setNeedsAuth(true);
-      setSheetActionBanner({
-        type: 'error',
-        message: 'Google 授權已過期，請重新登入後再同步。',
-      });
-      return;
-    }
-
-    setIsSheetBusy(true);
-    try {
-      const updated = await updateExistingTrackerSheet(
-        token,
-        createdSheet.spreadsheetId,
-        cards,
-        trackers,
-        spendCaps,
-        SPEND_CATEGORY_GUIDE
-      );
-      setCreatedSheet(updated);
-      setSheetActionBanner({
-        type: 'success',
-        message: `已成功將最新追蹤進度同步覆寫至「${updated.title}」（${updated.lastSyncedAt}）。`,
-      });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : '同步更新 Google Sheet 失敗';
-      setSheetActionBanner({ type: 'error', message: msg });
-    } finally {
-      setIsSheetBusy(false);
     }
   };
 
@@ -428,7 +254,7 @@ export default function App() {
                 : 'border-transparent hover:text-slate-900'
             }`}
           >
-            權益勘誤與總表
+            權益總表
           </button>
           <button
             type="button"
@@ -469,74 +295,30 @@ export default function App() {
         <div className="flex items-center gap-3">
           <button
             type="button"
+            onClick={handleCopySheetsTSV}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors whitespace-nowrap cursor-pointer"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            <span>複製試算表內容</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() =>
               exportCardsToCSV(cards, trackers, spendCaps, SPEND_CATEGORY_GUIDE)
             }
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors whitespace-nowrap cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-slate-900 rounded-md hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             <span>下載 CSV</span>
           </button>
-
-          {needsAuth ? (
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={isLoggingIn}
-              className="gsi-material-button"
-            >
-              <div className="gsi-material-button-state"></div>
-              <div className="gsi-material-button-content-wrapper">
-                <div className="gsi-material-button-icon">
-                  <svg
-                    version="1.1"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 48 48"
-                    style={{ display: 'block' }}
-                  >
-                    <path
-                      fill="#EA4335"
-                      d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
-                    ></path>
-                    <path
-                      fill="#4285F4"
-                      d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-                    ></path>
-                    <path
-                      fill="#FBBC05"
-                      d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
-                    ></path>
-                    <path
-                      fill="#34A853"
-                      d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-                    ></path>
-                    <path fill="none" d="M0 0h48v48H0z"></path>
-                  </svg>
-                </div>
-                <span className="gsi-material-button-contents">
-                  {isLoggingIn ? '連線中...' : 'Sign in with Google'}
-                </span>
-                <span style={{ display: 'none' }}>Sign in with Google</span>
-              </div>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleCreateNewGoogleSheet}
-              disabled={isSheetBusy}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-emerald-700 rounded-md hover:bg-emerald-800 disabled:opacity-60 transition-colors whitespace-nowrap cursor-pointer"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>{isSheetBusy ? '處理中...' : '生成 Google Sheet'}</span>
-            </button>
-          )}
         </div>
       </header>
 
       {/* Mobile Navigation Bar */}
       <div className="flex md:hidden items-center gap-1 px-4 py-2 bg-white border-b border-slate-200 overflow-x-auto">
         {[
-          { id: 'audit-table', label: '權益勘誤與總表' },
+          { id: 'audit-table', label: '權益總表' },
           { id: 'benefit-tracker', label: '年度報銷追蹤' },
           { id: 'spend-caps', label: '季度與滿額進度' },
           { id: 'category-guide', label: '最佳刷卡攻略' },
@@ -558,188 +340,70 @@ export default function App() {
 
       {/* Main Content Container (1440px max width) */}
       <main className="flex-1 w-full max-w-[1440px] mx-auto px-6 py-8 space-y-8">
-        {/* Top Hero & Google Sheets Command Bar */}
+        {/* Top Hero & Export Command Bar */}
         <section className="bg-white border border-slate-200 rounded-lg p-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 pb-6 border-b border-slate-200">
-            <div className="space-y-2 max-w-3xl">
+            <div className="space-y-1.5 max-w-3xl">
               <div className="flex items-center gap-2 text-xs text-slate-500">
                 <span>2026 美卡權益資料庫</span>
                 <span aria-hidden="true">·</span>
                 <span>11 張持卡組合</span>
                 <span aria-hidden="true">·</span>
-                <span>Google Sheets 四分頁自動建模</span>
+                <span>Google Sheets 四分頁匯出</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950">
-                信用卡權益勘誤報告與年度福利追蹤表
+                信用卡福利追蹤表
               </h1>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                已針對您的 11 張信用卡完成逐欄核對：修正{' '}
-                <strong className="font-semibold text-slate-900">
-                  IHG One Rewards Premier 漏填之每年 $50 United TravelBank 航空回饋
-                </strong>
-                ，並補齊{' '}
-                <strong className="font-semibold text-slate-900">
-                  CSP 2026/6 新制福利、Hyatt 與 Marriott 定級房晚與免房券門檻、日常消費回饋倍率與 UR 點數合併規則
-                </strong>
-                。
-              </p>
             </div>
 
-            {/* Google Sheets Workspace Panel */}
-            <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch sm:items-center gap-3 shrink-0">
-              <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="sheet-title-input"
-                  className="text-xs font-medium text-slate-600"
-                >
-                  Google Sheet 試算表名稱
-                </label>
-                <input
-                  id="sheet-title-input"
-                  type="text"
-                  value={customSheetTitle}
-                  onChange={(e) => setCustomSheetTitle(e.target.value)}
-                  className="w-full sm:w-72 px-3 py-2 text-xs text-slate-900 bg-slate-50 border border-slate-300 rounded-md focus:outline-none focus:border-slate-900"
-                  placeholder="輸入要建立的 Google Sheet 名稱"
-                />
-              </div>
+            {/* Export Actions Panel */}
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={handleCopySheetsTSV}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors whitespace-nowrap cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>複製試算表內容</span>
+              </button>
 
-              <div className="flex flex-wrap items-center gap-2 self-end">
-                <button
-                  type="button"
-                  onClick={handleCopySheetsTSV}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors whitespace-nowrap cursor-pointer"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>複製試算表內容</span>
-                </button>
-
-                {needsAuth ? (
-                  <button
-                    type="button"
-                    onClick={handleGoogleLogin}
-                    disabled={isLoggingIn}
-                    className="gsi-material-button"
-                  >
-                    <div className="gsi-material-button-state"></div>
-                    <div className="gsi-material-button-content-wrapper">
-                      <div className="gsi-material-button-icon">
-                        <svg
-                          version="1.1"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 48 48"
-                          style={{ display: 'block' }}
-                        >
-                          <path
-                            fill="#EA4335"
-                            d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
-                          ></path>
-                          <path
-                            fill="#4285F4"
-                            d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-                          ></path>
-                          <path
-                            fill="#FBBC05"
-                            d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
-                          ></path>
-                          <path
-                            fill="#34A853"
-                            d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-                          ></path>
-                          <path fill="none" d="M0 0h48v48H0z"></path>
-                        </svg>
-                      </div>
-                      <span className="gsi-material-button-contents">
-                        {isLoggingIn ? '連線中...' : 'Sign in with Google 生成試算表'}
-                      </span>
-                      <span style={{ display: 'none' }}>Sign in with Google</span>
-                    </div>
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleCreateNewGoogleSheet}
-                      disabled={isSheetBusy}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-emerald-700 rounded-md hover:bg-emerald-800 disabled:opacity-60 transition-colors whitespace-nowrap cursor-pointer"
-                    >
-                      <FileSpreadsheet className="w-4 h-4" />
-                      <span>
-                        {isSheetBusy ? '正在寫入 Google Sheets...' : '建立全新 4 分頁 Google Sheet'}
-                      </span>
-                    </button>
-
-                    {createdSheet && (
-                      <button
-                        type="button"
-                        onClick={() => setIsConfirmUpdateModalOpen(true)}
-                        disabled={isSheetBusy}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-slate-800 bg-slate-100 border border-slate-300 rounded-md hover:bg-slate-200 disabled:opacity-60 transition-colors whitespace-nowrap cursor-pointer"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                        <span>同步更新現有試算表</span>
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={handleGoogleLogout}
-                      title="登出 Google 帳號"
-                      className="inline-flex items-center gap-1 px-2.5 py-2.5 text-xs text-slate-500 hover:text-slate-900 border border-slate-200 rounded-md transition-colors cursor-pointer"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                    </button>
-                  </>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  exportCardsToCSV(cards, trackers, spendCaps, SPEND_CATEGORY_GUIDE)
+                }
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-white bg-slate-900 rounded-md hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>下載 CSV 試算表</span>
+              </button>
             </div>
           </div>
 
-          {/* Status / Created Sheet Link Bar */}
-          {(sheetActionBanner || createdSheet || user) && (
-            <div className="pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-3 flex-wrap">
-                {user && (
-                  <span className="text-slate-500">
-                    已連結帳號：<strong className="text-slate-800">{user.email}</strong>
-                  </span>
+          {/* Status Banner */}
+          {sheetActionBanner && (
+            <div className="pt-4 flex items-center justify-between gap-3 text-xs">
+              <span
+                className={`inline-flex items-center gap-1.5 font-medium ${
+                  sheetActionBanner.type === 'success'
+                    ? 'text-emerald-700'
+                    : sheetActionBanner.type === 'info'
+                    ? 'text-slate-700'
+                    : 'text-red-600'
+                }`}
+              >
+                {sheetActionBanner.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
                 )}
-                {sheetActionBanner && (
-                  <span
-                    className={`inline-flex items-center gap-1.5 font-medium ${
-                      sheetActionBanner.type === 'success'
-                        ? 'text-emerald-700'
-                        : sheetActionBanner.type === 'info'
-                        ? 'text-slate-700'
-                        : 'text-red-600'
-                    }`}
-                  >
-                    {sheetActionBanner.type === 'success' ? (
-                      <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    ) : (
-                      <AlertTriangle className="w-4 h-4 shrink-0" />
-                    )}
-                    <span>{sheetActionBanner.message}</span>
-                  </span>
-                )}
-              </div>
-
-              {createdSheet && (
-                <a
-                  href={createdSheet.spreadsheetUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 hover:text-emerald-800 underline underline-offset-4 whitespace-nowrap"
-                >
-                  <span>開啟 Google Sheet：「{createdSheet.title}」</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              )}
+                <span>{sheetActionBanner.message}</span>
+              </span>
             </div>
           )}
 
           {/* Quantitative Portfolio Metrics Strip (Single-level hairlines, tabular-nums) */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-6 pt-6 mt-6 border-t border-slate-200">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-6 mt-6 border-t border-slate-200">
             <div>
               <div className="text-xs text-slate-500">持卡總數 · 年費結構</div>
               <div className="mt-1 text-2xl font-bold font-mono tabular-nums text-slate-950">
@@ -783,109 +447,19 @@ export default function App() {
                 點擊「年度報銷追蹤」可勾選更新進度
               </div>
             </div>
-
-            <div className="col-span-2 lg:col-span-1">
-              <div className="text-xs text-slate-500">原表勘誤發現項目</div>
-              <div className="mt-1 text-2xl font-bold font-mono tabular-nums text-slate-950">
-                1 處漏填 · 6 處補充
-              </div>
-              <div className="mt-0.5 text-xs text-slate-500">
-                IHG 航空回饋 $50 UA TravelBank 已補上
-              </div>
-            </div>
           </div>
         </section>
 
-        {/* SECTION 1: AUDIT & MASTER BENEFITS TABLE */}
+        {/* SECTION 1: MASTER BENEFITS TABLE */}
         {activeSection === 'audit-table' && (
           <div className="space-y-8">
-            {/* Key Audit Findings Grid */}
-            <section className="bg-white border border-slate-200 rounded-lg p-6 space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-4">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-950">
-                    01. 原表勘誤與重要漏列權益清單
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    逐項比對您提供的 11 張信用卡原始表格與 2026 年最新官方條款
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveSection('benefit-tracker')}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 hover:underline whitespace-nowrap cursor-pointer"
-                >
-                  <span>前往追蹤這 13 項年度報銷與免房券</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="divide-y divide-slate-200">
-                {AUDIT_ISSUES.map((issue, idx) => (
-                  <div
-                    key={issue.id}
-                    className="py-4 first:pt-0 last:pb-0 grid grid-cols-1 lg:grid-cols-12 gap-4"
-                  >
-                    <div className="lg:col-span-3 space-y-1">
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="font-mono font-semibold text-slate-400">
-                          0{idx + 1}
-                        </span>
-                        <span aria-hidden="true" className="text-slate-300">
-                          ·
-                        </span>
-                        <span
-                          className={`font-semibold ${
-                            issue.severity === 'error'
-                              ? 'text-red-600'
-                              : 'text-amber-700'
-                          }`}
-                        >
-                          {issue.severity === 'error' ? '欄位缺漏勘誤' : '重要權益補充'}
-                        </span>
-                        <span aria-hidden="true" className="text-slate-300">
-                          ·
-                        </span>
-                        <span className="text-slate-500">{issue.column}</span>
-                      </div>
-                      <div className="text-sm font-bold text-slate-950">
-                        {issue.cardName}
-                      </div>
-                    </div>
-
-                    <div className="lg:col-span-9 space-y-2">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                          <div className="text-slate-500 font-medium mb-1">
-                            原表內容：
-                          </div>
-                          <div className="text-slate-700">{issue.originalText}</div>
-                        </div>
-                        <div className="p-3 bg-emerald-50/50 border border-emerald-200 rounded-md">
-                          <div className="text-emerald-800 font-semibold mb-1">
-                            修正與補齊後：
-                          </div>
-                          <div className="text-slate-900 font-medium">
-                            {issue.correctedText}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        {issue.explanation}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
             {/* Interactive Master Credit Card Table */}
             <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
               {/* Controls Bar */}
               <div className="p-5 border-b border-slate-200 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <h2 className="text-lg font-bold text-slate-950">
-                    02. 11 張信用卡完整權益總表
+                    信用卡完整權益總表
                   </h2>
                   <p className="text-xs text-slate-500">
                     可切換「修正完整版」、「勘誤差異對照」或「原始表格」檢視
@@ -1183,7 +757,7 @@ export default function App() {
                   年度帳單報銷、免房券與半年度福利追蹤器
                 </h2>
                 <p className="text-xs text-slate-500">
-                  直接在此勾選或調整已使用金額，點擊上方「建立全新 4 分頁 Google Sheet」或「同步更新現有試算表」即可將最新進度寫入您的 Google Sheets
+                  直接在此勾選或調整已使用金額，點擊上方「複製試算表內容」或「下載 CSV」即可匯出最新進度
                 </p>
               </div>
 
@@ -1556,25 +1130,17 @@ export default function App() {
       {/* Clean Quiet Footer */}
       <footer className="mt-auto border-t border-slate-200 bg-white py-5 px-6">
         <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-          <div>CardLedger · 美卡權益勘誤與 Google Sheets 多分頁追蹤工具</div>
+          <div>CardLedger · 信用卡福利追蹤表</div>
           <div className="flex items-center gap-4">
             <button
               type="button"
-              onClick={() => exportCardsToCSV(cards, trackers)}
+              onClick={() =>
+                exportCardsToCSV(cards, trackers, spendCaps, SPEND_CATEGORY_GUIDE)
+              }
               className="hover:text-slate-900 underline underline-offset-4 cursor-pointer"
             >
               匯出 CSV 備份
             </button>
-            {createdSheet && (
-              <a
-                href={createdSheet.spreadsheetUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-slate-900 underline underline-offset-4"
-              >
-                開啟目前已建立的 Google Sheet
-              </a>
-            )}
           </div>
         </div>
       </footer>
@@ -1733,64 +1299,6 @@ export default function App() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 2: Mandatory User Confirmation before mutating/updating existing Google Sheet */}
-      {isConfirmUpdateModalOpen && createdSheet && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="bg-white border border-slate-200 rounded-lg max-w-md w-full p-6 space-y-4">
-            <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-950">
-                  確認更新 Google Sheet 試算表內容？
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  此操作將會覆寫現有試算表中的資料列
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsConfirmUpdateModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="text-xs text-slate-600 space-y-2 leading-relaxed">
-              <p>
-                您即將把目前的追蹤進度同步覆寫至 Google Sheet：
-                <strong className="block text-slate-900 mt-1">
-                  「{createdSheet.title}」
-                </strong>
-              </p>
-              <p>將會更新以下 4 個工作表分頁的內容：</p>
-              <ul className="list-disc pl-5 space-y-1 text-slate-700">
-                <li>1_信用卡權益總覽(修正完整版) — 共 {cards.length} 張卡</li>
-                <li>2_年度報銷與免房券追蹤 — 共 {trackers.length} 項福利紀錄</li>
-                <li>3_季度5%輪替與滿額進度 — 共 {spendCaps.length} 項進度紀錄</li>
-                <li>4_最佳刷卡通路攻略 — 共 {SPEND_CATEGORY_GUIDE.length} 項通路建議</li>
-              </ul>
-            </div>
-
-            <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-200">
-              <button
-                type="button"
-                onClick={() => setIsConfirmUpdateModalOpen(false)}
-                className="px-4 py-2 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 cursor-pointer"
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmUpdateExistingSheet}
-                className="px-4 py-2 text-xs font-semibold text-white bg-emerald-700 rounded-md hover:bg-emerald-800 cursor-pointer"
-              >
-                確認覆寫更新
-              </button>
-            </div>
           </div>
         </div>
       )}
