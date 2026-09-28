@@ -1,0 +1,6 @@
+{
+  "name": "CardLedger — 信用卡權益勘誤與 Google Sheets 追蹤系統",
+  "description": "11 張美卡權益完整性勘誤報告、2026 最新福利資料庫與一鍵自動生成 Google Sheets 多分頁權益追蹤表。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
