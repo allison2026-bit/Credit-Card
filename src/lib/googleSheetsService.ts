@@ -14,31 +14,38 @@ export interface CreatedSheetInfo {
 
 function buildTab1Rows(cards: CreditCardRecord[]): (string | number)[][] {
   const header = [
-    '信用卡 / 發卡行與年費',
-    '核心與日常消費回饋',
-    '飯店折抵 · 航空報銷 · 會籍',
-    '年度免房券與重要福利',
+    '信用卡名稱',
     '年費 ($)',
+    '免海外手續費 (No FTF)',
+    '主要與日常回饋 (精簡)',
+    '飯店折抵 · 航空 · 會籍',
+    '年度重要福利',
     '預估福利價值 ($)',
   ];
 
   const rows = cards.map((c) => [
-    `${c.name} (${c.issuer} · ${c.annualFeeNote} · ${c.foreignTxFee})`,
-    `【主要】${c.corrected.primaryRewards} ｜ 【其他】${c.corrected.otherRewards}`,
-    `飯店折抵：${c.corrected.chaseTravelCredit} ｜ 航空：${c.corrected.airlineCredit} ｜ 會籍：${c.corrected.hotelStatus}`,
-    `${c.corrected.keyAnnualPerks}（點數：${c.rewardsCurrency}）`,
+    `${c.name} (${c.issuer})`,
     c.annualFee,
+    c.foreignTxFee.includes('$0') ? '✓ 免海外手續費 ($0)' : `✕ ${c.foreignTxFee} 海外手續費`,
+    `${c.shortSummary?.primaryRewards ?? c.corrected.primaryRewards} ｜ ${
+      c.shortSummary?.otherRewards ?? c.corrected.otherRewards
+    }`,
+    `飯店：${c.shortSummary?.hotelCredit ?? c.corrected.chaseTravelCredit} ｜ 航空：${
+      c.shortSummary?.airlineCredit ?? c.corrected.airlineCredit
+    } ｜ 會籍：${c.shortSummary?.hotelStatus ?? c.corrected.hotelStatus}`,
+    c.shortSummary?.keyPerks ?? c.corrected.keyAnnualPerks,
     c.estimatedAnnualPerkValue,
   ]);
 
   const summaryRowIndex = rows.length + 2;
   const totalRow = [
-    '合計 / 總覽 (11 張信用卡)',
+    '合計 (11 張卡)',
+    `=SUM(B2:B${summaryRowIndex - 1})`,
+    '7 張免海外手續費',
     '4 張年費卡 + 7 張免年費卡',
-    '手機版精簡欄位（免橫向滑動）',
-    '淨回本價值 = 福利總值 - 總年費',
-    `=SUM(E2:E${summaryRowIndex - 1})`,
-    `=SUM(F2:F${summaryRowIndex - 1})`,
+    '',
+    '年度預估福利總值：',
+    `=SUM(G2:G${summaryRowIndex - 1})`,
   ];
 
   return [header, ...rows, totalRow];
@@ -46,33 +53,42 @@ function buildTab1Rows(cards: CreditCardRecord[]): (string | number)[][] {
 
 function buildTab2Rows(trackers: BenefitTrackerItem[]): (string | number)[][] {
   const header = [
+    '紀錄日期',
+    '狀態',
     '信用卡 / 福利項目',
-    '最高額度 ($)',
+    '總額 ($)',
     '已用 ($)',
-    '剩餘 ($)',
-    '狀態 · 週期 · 使用說明',
+    '已過期無法用 ($)',
+    '剩餘可用 ($)',
+    '週期与簡要說明',
   ];
 
   const rows = trackers.map((t, idx) => {
     const rowNum = idx + 2;
     return [
-      `[${t.status}] ${t.cardName} — ${t.benefitTitle}`,
+      t.recordedDate || '2026-09-29',
+      t.status,
+      `${t.cardName} — ${t.shortTitle || t.benefitTitle}`,
       t.maxValue,
       t.usedValue,
-      `=MAX(0, B${rowNum}-C${rowNum})`,
-      `${t.cadence} (${t.deadlineOrReset}) ｜ ${
-        t.activationRequired ? '需綁定/啟用' : '自動觸發'
-      } ｜ ${t.notes}`,
+      t.expiredValue || 0,
+      `=MAX(0, D${rowNum}-E${rowNum}-F${rowNum})`,
+      t.calendarAlertLabel
+        ? `${t.calendarAlertLabel} ｜ ${t.cadence}`
+        : `${t.cadence} (${t.deadlineOrReset})`,
     ];
   });
 
   const lastDataRow = rows.length + 1;
   const totalRow = [
-    '合計（年度可追蹤福利總計）',
-    `=SUM(B2:B${lastDataRow})`,
-    `=SUM(C2:C${lastDataRow})`,
+    '2026-09-29',
+    '合計',
+    '年度可追蹤福利總計',
     `=SUM(D2:D${lastDataRow})`,
-    '手機版 5 欄設計，自動計算已用與剩餘價值',
+    `=SUM(E2:E${lastDataRow})`,
+    `=SUM(F2:F${lastDataRow})`,
+    `=SUM(G2:G${lastDataRow})`,
+    '剩餘可用 = 總額 - 已用 - 已過期',
   ];
 
   return [header, ...rows, totalRow];
@@ -80,25 +96,23 @@ function buildTab2Rows(trackers: BenefitTrackerItem[]): (string | number)[][] {
 
 function buildTab3Rows(caps: SpendCapTrackerItem[]): (string | number)[][] {
   const header = [
-    '信用卡 / 計畫與期間',
+    '狀態',
+    '信用卡 / 計畫',
     '上限 ($)',
     '已刷 ($)',
     '尚餘 ($)',
-    '進度 · 回饋率 · 指定類別與備註',
+    '回饋率與指定類別',
   ];
 
   const rows = caps.map((item, idx) => {
     const rowNum = idx + 2;
-    const pct =
-      item.spendCap > 0
-        ? `${Math.min(100, Math.round((item.currentSpend / item.spendCap) * 100))}%`
-        : '0%';
     return [
-      `[${item.activated ? '已啟用' : '待啟用'}] ${item.cardName} — ${item.programName} (${item.period})`,
+      item.activated ? '✓ 已啟用' : '待啟用',
+      `${item.cardName} — ${item.programName}`,
       item.spendCap,
       item.currentSpend,
-      `=MAX(0, B${rowNum}-C${rowNum})`,
-      `進度 ${pct} ｜ ${item.rewardRate} ｜ 類別：${item.categoryDescription} ｜ ${item.notes}`,
+      `=MAX(0, C${rowNum}-D${rowNum})`,
+      `${item.rewardRate} ｜ ${item.categoryDescription}`,
     ];
   });
 
@@ -107,15 +121,17 @@ function buildTab3Rows(caps: SpendCapTrackerItem[]): (string | number)[][] {
 
 function buildTab4Rows(guide: CategoryBestCard[]): (string | number)[][] {
   const header = [
-    '消費通路與場景',
-    '首選主力卡 · 回饋率',
-    '次選備用卡 · 實戰刷卡策略',
+    '消費通路',
+    '首選主力卡',
+    '回饋率 (實質投報)',
+    '次選備用卡',
   ];
 
   const rows = guide.map((g) => [
     g.category,
-    `${g.bestCard} ｜ ${g.multiplier}（實質 ${g.effectiveReturnNote}）`,
-    `次選：${g.runnerUpCard} ｜ 策略：${g.tips}`,
+    g.bestCard,
+    `${g.multiplier} (${g.effectiveReturnNote})`,
+    g.runnerUpCard,
   ]);
 
   return [header, ...rows];
