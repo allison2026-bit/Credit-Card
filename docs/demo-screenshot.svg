@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="100%" height="100%">
+  <defs>
+    <style>
+      .font-sans { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+      .font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+    </style>
+  </defs>
+
+  <!-- Morandi Canvas Background -->
+  <rect width="1200" height="780" rx="18" fill="#F2EFE9" />
+
+  <!-- Top Navigation Bar -->
+  <rect x="0" y="0" width="1200" height="58" rx="18" fill="#FAF8F5" />
+  <line x1="0" y1="58" x2="1200" y2="58" stroke="#D8D2C9" stroke-width="1.5" />
+  <text x="36" y="36" class="font-sans" font-size="20" font-weight="800" fill="#3D3A36">CardLedger</text>
+
+  <!-- Nav Tabs -->
+  <text x="430" y="35" class="font-sans" font-size="14" font-weight="600" fill="#6E685F">權益總表</text>
+  <text x="520" y="35" class="font-sans" font-size="14" font-weight="800" fill="#3D3A36">報銷追蹤</text>
+  <line x1="518" y1="46" x2="578" y2="46" stroke="#667889" stroke-width="3" />
+  <text x="610" y="35" class="font-sans" font-size="14" font-weight="600" fill="#6E685F">季度與滿額</text>
+  <text x="712" y="35" class="font-sans" font-size="14" font-weight="600" fill="#6E685F">刷卡攻略</text>
+
+  <!-- Top Action Buttons -->
+  <rect x="975" y="15" width="102" height="30" rx="8" fill="#E5EAEF" stroke="#C5D0DA" />
+  <text x="1026" y="34" text-anchor="middle" class="font-sans" font-size="12" font-weight="700" fill="#3A4956">複製試算表</text>
+  <rect x="1088" y="15" width="76" height="30" rx="8" fill="#5C7062" />
+  <text x="1126" y="34" text-anchor="middle" class="font-sans" font-size="12" font-weight="700" fill="#FAF8F5">CSV</text>
+
+  <!-- Hero & KPI Section Card -->
+  <rect x="32" y="76" width="1136" height="166" rx="16" fill="#FAF8F5" stroke="#D8D2C9" stroke-width="1.5" />
+  <text x="54" y="104" class="font-sans" font-size="12" font-weight="600" fill="#6E685F">信用卡福利追蹤表 · 紀錄日：2026-09-29 · 支援 Google Calendar 提醒</text>
+  <text x="54" y="130" class="font-sans" font-size="22" font-weight="800" fill="#3D3A36">信用卡福利追蹤表</text>
+
+  <!-- Layout Mode Switcher -->
+  <rect x="960" y="96" width="186" height="34" rx="10" fill="#E6E2DD" />
+  <rect x="964" y="100" width="90" height="26" rx="8" fill="#5A6B7C" />
+  <text x="1009" y="117" text-anchor="middle" class="font-sans" font-size="12" font-weight="700" fill="#FAF8F5">精簡卡片</text>
+  <text x="1100" y="117" text-anchor="middle" class="font-sans" font-size="12" font-weight="700" fill="#635E57">精簡表格</text>
+
+  <line x1="54" y1="144" x2="1146" y2="144" stroke="#E6E1D9" stroke-width="1" />
+
+  <!-- 4 Morandi KPI Cards -->
+  <!-- KPI 1 -->
+  <rect x="54" y="156" width="260" height="72" rx="12" fill="#E5EAEF" stroke="#C5D0DA" />
+  <text x="68" y="176" class="font-sans" font-size="11" font-weight="700" fill="#3A4956">持卡組合 · 免海外手續費</text>
+  <text x="68" y="200" class="font-mono" font-size="19" font-weight="800" fill="#3D3A36">11 張卡</text>
+  <text x="68" y="218" class="font-sans" font-size="11" fill="#526373">7 張免 FTF · 4 張有年費</text>
+
+  <!-- KPI 2 -->
+  <rect x="330" y="156" width="260" height="72" rx="12" fill="#EFEAD8" stroke="#D6CCB0" />
+  <text x="344" y="176" class="font-sans" font-size="11" font-weight="700" fill="#574B35">年度總年費 vs 總福利</text>
+  <text x="344" y="200" class="font-mono" font-size="19" font-weight="800" fill="#3D3A36">$380 <tspan font-size="13" fill="#867F75">/</tspan> <tspan fill="#3B4D40">$1,170</tspan></text>
+  <text x="344" y="218" class="font-sans" font-size="11" fill="#6B5D43">淨潛在價值 +$790</text>
+
+  <!-- KPI 3 -->
+  <rect x="606" y="156" width="260" height="72" rx="12" fill="#EFE3E1" stroke="#D8C0BC" />
+  <text x="620" y="176" class="font-sans" font-size="11" font-weight="700" fill="#5E3F3C">已用金額 / 已過期失效</text>
+  <text x="620" y="200" class="font-mono" font-size="19" font-weight="800" fill="#3B4D40">$10 <tspan font-size="13" fill="#867F75">/</tspan> <tspan fill="#61413E">-$155</tspan></text>
+  <text x="620" y="218" class="font-sans" font-size="11" fill="#75524E">含過期額度自動扣除</text>
+
+  <!-- KPI 4 -->
+  <rect x="882" y="156" width="264" height="72" rx="12" fill="#E3EBE4" stroke="#C2D1C4" />
+  <text x="896" y="176" class="font-sans" font-size="11" font-weight="700" fill="#3B4D40">目前真正剩餘可用</text>
+  <text x="896" y="200" class="font-mono" font-size="19" font-weight="800" fill="#3B4D40">$1,005</text>
+  <text x="896" y="218" class="font-sans" font-size="11" fill="#4E6353">已扣過期與已用額度</text>
+
+  <!-- Main Section Container: 報銷追蹤 -->
+  <rect x="32" y="258" width="1136" height="494" rx="16" fill="#FAF8F5" stroke="#D8D2C9" stroke-width="1.5" />
+  <rect x="33" y="259" width="1134" height="148" rx="15" fill="#EFECE6" />
+  <line x1="32" y1="407" x2="1168" y2="407" stroke="#D8D2C9" stroke-width="1.5" />
+
+  <!-- Section Header Row -->
+  <text x="54" y="288" class="font-sans" font-size="18" font-weight="800" fill="#3D3A36">報銷追蹤</text>
+  <rect x="820" y="268" width="132" height="30" rx="9" fill="#FAF8F5" stroke="#C2D1C4" />
+  <text x="886" y="287" text-anchor="middle" class="font-mono" font-size="12" font-weight="700" fill="#3D3A36">2026-09-29</text>
+  <rect x="960" y="268" width="124" height="30" rx="9" fill="#5C7062" />
+  <text x="1022" y="287" text-anchor="middle" class="font-sans" font-size="12" font-weight="700" fill="#FAF8F5">儲存 (2026-09-29)</text>
+  <rect x="1092" y="268" width="54" height="30" rx="9" fill="#E5EAEF" stroke="#C5D0DA" />
+  <text x="1119" y="287" text-anchor="middle" class="font-sans" font-size="12" font-weight="700" fill="#3A4956">+ 新增</text>
+
+  <!-- Simplified Google Calendar Reminder Bar -->
+  <rect x="54" y="308" width="1092" height="84" rx="14" fill="#FAF8F5" stroke="#C5D0DA" />
+  <text x="74" y="334" class="font-sans" font-size="14" font-weight="800" fill="#3D3A36">🔔 Google 日曆提醒</text>
+  <rect x="992" y="316" width="138" height="28" rx="8" fill="#5A6B7C" />
+  <text x="1061" y="334" text-anchor="middle" class="font-sans" font-size="12" font-weight="700" fill="#FAF8F5">一鍵加全部提醒</text>
+
+  <!-- 6 Concise Alert Chips -->
+  <g transform="translate(74, 350)">
+    <rect x="0" y="0" width="156" height="28" rx="8" fill="#E3EBE4" stroke="#C2D1C4" />
+    <text x="78" y="18" text-anchor="middle" class="font-sans" font-size="11" font-weight="700" fill="#3B4D40">CSP 飯店 $100 · 10/1 ✓</text>
+
+    <rect x="164" y="0" width="166" height="28" rx="8" fill="#E3EBE4" stroke="#C2D1C4" />
+    <text x="247" y="18" text-anchor="middle" class="font-sans" font-size="11" font-weight="700" fill="#3B4D40">IHG UA $25 · 1/5, 7/5 ✓</text>
+
+    <rect x="338" y="0" width="194" height="28" rx="8" fill="#E3EBE4" stroke="#C2D1C4" />
+    <text x="435" y="18" text-anchor="middle" class="font-sans" font-size="11" font-weight="700" fill="#3B4D40">Marriott 航空 $50 · 1/5, 7/5 ✓</text>
+
+    <rect x="540" y="0" width="172" height="28" rx="8" fill="#F2EFE9" stroke="#D8D2C9" />
+    <text x="626" y="18" text-anchor="middle" class="font-sans" font-size="11" font-weight="700" fill="#3D3A36">Marriott 35k 房券 · 3/1 +</text>
+
+    <rect x="720" y="0" width="152" height="28" rx="8" fill="#F2EFE9" stroke="#D8D2C9" />
+    <text x="796" y="18" text-anchor="middle" class="font-sans" font-size="11" font-weight="700" fill="#3D3A36">IHG 40k 房券 · 9/1 +</text>
+
+    <rect x="880" y="0" width="144" height="28" rx="8" fill="#F2EFE9" stroke="#D8D2C9" />
+    <text x="952" y="18" text-anchor="middle" class="font-sans" font-size="11" font-weight="700" fill="#3D3A36">Hyatt 房券 · 11/1 +</text>
+  </g>
+
+  <!-- Tracker Cards Grid (Showing Chronological Order + DoorDash 2026/09/29 State) -->
+  <!-- Card 1: CSP $100 Hotel -->
+  <rect x="54" y="424" width="536" height="146" rx="14" fill="#FAF8F5" stroke="#D8D2C9" />
+  <text x="72" y="448" class="font-mono" font-size="11" font-weight="700" fill="#867F75">01. 飯店折抵 · Chase Sapphire Preferred</text>
+  <rect x="498" y="434" width="74" height="22" rx="6" fill="#EAE6DF" stroke="#CFC8BE" />
+  <text x="535" y="449" text-anchor="middle" class="font-sans" font-size="11" font-weight="700" fill="#635E57">未使用</text>
+  <text x="72" y="474" class="font-sans" font-size="16" font-weight="800" fill="#3D3A36">Chase Travel $100 飯店折抵</text>
+  <text x="72" y="494" class="font-sans" font-size="11" fill="#3A4956">每年 · 周年重置 · 🔔 10/1 提醒</text>
+  <text x="572" y="476" text-anchor="end" class="font-mono" font-size="18" font-weight="800" fill="#3B4D40">剩 $100</text>
+
+  <rect x="72" y="508" width="160" height="44" rx="8" fill="#E3EBE4" stroke="#C2D1C4" />
+  <text x="152" y="525" text-anchor="middle" class="font-sans" font-size="10" font-weight="700" fill="#3B4D40">已使用</text>
+  <text x="152" y="543" text-anchor="middle" class="font-mono" font-size="13" font-weight="800" fill="#3B4D40">$0</text>
+
+  <rect x="242" y="508" width="160" height="44" rx="8" fill="#EFE3E1" stroke="#D8C0BC" />
+  <text x="322" y="525" text-anchor="middle" class="font-sans" font-size="10" font-weight="700" fill="#5E3F3C">過期無法用</text>
+  <text x="322" y="543" text-anchor="middle" class="font-mono" font-size="13" font-weight="800" fill="#5E3F3C">$0</text>
+
+  <rect x="412" y="508" width="160" height="44" rx="8" fill="#E5EAEF" stroke="#C5D0DA" />
+  <text x="492" y="525" text-anchor="middle" class="font-sans" font-size="10" font-weight="700" fill="#3A4956">尚餘可用</text>
+  <text x="492" y="543" text-anchor="middle" class="font-mono" font-size="13" font-weight="800" fill="#3A4956">$100</text>
+
+  <!-- Card 2: IHG UA TravelBank -->
+  <rect x="610" y="424" width="536" height="146" rx="14" fill="#FAF8F5" stroke="#D8D2C9" />
+  <text x="628" y="448" class="font-mono" font-size="11" font-weight="700" fill="#867F75">02. 航空報銷 · Chase IHG One Rewards Premier</text>
+  <rect x="1054" y="434" width="74" height="22" rx="6" fill="#EFEAD8" stroke="#D6CCB0" />
+  <text x="1091" y="449" text-anchor="middle" class="font-sans" font-size="11" font-weight="700" fill="#574B35">部分過期</text>
+  <text x="628" y="474" class="font-sans" font-size="16" font-weight="800" fill="#3D3A36">UA TravelBank ($25 × 2)</text>
+  <text x="628" y="494" class="font-sans" font-size="11" fill="#3A4956">每半年 · 1/5 &amp; 7/5 各 $25 · 🔔 1/5 · 7/5 提醒</text>
+  <text x="1128" y="476" text-anchor="end" class="font-mono" font-size="18" font-weight="800" fill="#3B4D40">剩 $25</text>
+
+  <rect x="628" y="508" width="160" height="44" rx="8" fill="#E3EBE4" stroke="#C2D1C4" />
+  <text x="708" y="525" text-anchor="middle" class="font-sans" font-size="10" font-weight="700" fill="#3B4D40">已使用</text>
+  <text x="708" y="543" text-anchor="middle" class="font-mono" font-size="13" font-weight="800" fill="#3B4D40">$0</text>
+
+  <rect x="798" y="508" width="160" height="44" rx="8" fill="#EFE3E1" stroke="#D8C0BC" />
+  <text x="878" y="525" text-anchor="middle" class="font-sans" font-size="10" font-weight="700" fill="#5E3F3C">過期無法用</text>
+  <text x="878" y="543" text-anchor="middle" class="font-mono" font-size="13" font-weight="800" fill="#5E3F3C">$25</text>
+
+  <rect x="968" y="508" width="160" height="44" rx="8" fill="#E5EAEF" stroke="#C5D0DA" />
+  <text x="1048" y="525" text-anchor="middle" class="font-sans" font-size="10" font-weight="700" fill="#3A4956">尚餘可用</text>
+  <text x="1048" y="543" text-anchor="middle" class="font-mono" font-size="13" font-weight="800" fill="#3A4956">$25</text>
+
+  <!-- Card 3 (Bottom Full Width Highlight): CSP DoorDash 12-Month Tracker -->
+  <rect x="54" y="584" width="1092" height="150" rx="14" fill="#FAF8F5" stroke="#D8D2C9" />
+  <text x="72" y="608" class="font-mono" font-size="11" font-weight="700" fill="#867F75">07. 生活與外送 · Chase Sapphire Preferred · 紀錄日 2026-09-29</text>
+  <text x="72" y="634" class="font-sans" font-size="16" font-weight="800" fill="#3D3A36">DoorDash 每月 $10 折抵（1–8月過期 -$80 · 9月已用 $10）</text>
+  <text x="1128" y="634" text-anchor="end" class="font-mono" font-size="18" font-weight="800" fill="#3B4D40">剩 $30 <tspan font-size="12" fill="#867F75">(或未用剩 $40)</tspan></text>
+
+  <!-- 12 Month Pills -->
+  <g transform="translate(72, 652)">
+    <rect x="0" y="0" width="76" height="36" rx="6" fill="#EFE3E1" stroke="#D8C0BC" />
+    <text x="38" y="22" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#5E3F3C">1月 過期</text>
+    <rect x="84" y="0" width="76" height="36" rx="6" fill="#EFE3E1" stroke="#D8C0BC" />
+    <text x="122" y="22" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#5E3F3C">2月 過期</text>
+    <rect x="168" y="0" width="76" height="36" rx="6" fill="#EFE3E1" stroke="#D8C0BC" />
+    <text x="206" y="22" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#5E3F3C">3月 過期</text>
+    <rect x="252" y="0" width="76" height="36" rx="6" fill="#EFE3E1" stroke="#D8C0BC" />
+    <text x="290" y="22" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#5E3F3C">4月 過期</text>
+    <rect x="336" y="0" width="76" height="36" rx="6" fill="#EFE3E1" stroke="#D8C0BC" />
+    <text x="374" y="22" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#5E3F3C">5月 過期</text>
+    <rect x="420" y="0" width="76" height="36" rx="6" fill="#EFE3E1" stroke="#D8C0BC" />
+    <text x="458" y="22" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#5E3F3C">6月 過期</text>
+    <rect x="504" y="0" width="76" height="36" rx="6" fill="#EFE3E1" stroke="#D8C0BC" />
+    <text x="542" y="22" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#5E3F3C">7月 過期</text>
+    <rect x="588" y="0" width="76" height="36" rx="6" fill="#EFE3E1" stroke="#D8C0BC" />
+    <text x="626" y="22" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#5E3F3C">8月 過期</text>
+    <rect x="672" y="0" width="84" height="36" rx="6" fill="#5C7062" />
+    <text x="714" y="22" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#FAF8F5">9月 已用$10</text>
+    <rect x="764" y="0" width="84" height="36" rx="6" fill="#FAF8F5" stroke="#CFC8BE" />
+    <text x="806" y="22" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#3D3A36">10月 可用</text>
+    <rect x="856" y="0" width="84" height="36" rx="6" fill="#FAF8F5" stroke="#CFC8BE" />
+    <text x="898" y="22" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#3D3A36">11月 可用</text>
+    <rect x="948" y="0" width="88" height="36" rx="6" fill="#FAF8F5" stroke="#CFC8BE" />
+    <text x="992" y="22" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#3D3A36">12月 可用</text>
+  </g>
+</svg>

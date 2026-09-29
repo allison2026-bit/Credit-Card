@@ -26,6 +26,7 @@ import {
   Globe,
   LogOut,
   ExternalLink,
+  Camera,
 } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import {
@@ -41,6 +42,7 @@ import {
 import {
   exportCardsToCSV,
   copySheetsTSVToClipboard,
+  downloadAppDemoScreenshotPNG,
 } from './lib/googleSheetsService';
 import {
   PRESET_CALENDAR_ALERTS,
@@ -768,12 +770,22 @@ export default function App() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={handleCopySheetsTSV}
+            onClick={() => {
+              downloadAppDemoScreenshotPNG(
+                trackers,
+                globalTrackingDate,
+                portfolioStats
+              );
+              setSheetActionBanner({
+                type: 'success',
+                message: '已下載高清莫蘭迪配色預覽截圖 (PNG)，可直接上傳至 GitHub！',
+              });
+            }}
             className="inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs font-semibold text-[#3A4956] bg-[#E5EAEF] border border-[#C5D0DA] rounded-lg hover:bg-[#DAE2E9] transition-colors whitespace-nowrap cursor-pointer"
+            title="下載 GitHub 預覽截圖 (PNG)"
           >
-            <Copy className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">複製試算表</span>
-            <span className="sm:hidden">複製</span>
+            <Camera className="w-3.5 h-3.5" />
+            <span>截圖</span>
           </button>
 
           <button

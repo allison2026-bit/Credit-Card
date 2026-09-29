@@ -216,3 +216,158 @@ export async function copySheetsTSVToClipboard(
 
   await navigator.clipboard.writeText(tsvContent);
 }
+
+/**
+ * Generates and downloads a 2x Retina PNG screenshot of the live Morandi tracker state
+ * for sharing on GitHub or social media.
+ */
+export function downloadAppDemoScreenshotPNG(
+  trackers: BenefitTrackerItem[],
+  trackingDate: string,
+  stats: {
+    totalAnnualFees: number;
+    totalTrackableCredits: number;
+    usedTrackableCredits: number;
+    expiredTrackableCredits: number;
+    remainingTrackableCredits: number;
+  }
+): void {
+  const width = 1200;
+  const height = 820;
+  const scale = 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.scale(scale, scale);
+
+  const drawRoundRect = (
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number,
+    fill: string,
+    stroke?: string
+  ) => {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    if (stroke) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  };
+
+  // Background
+  drawRoundRect(0, 0, width, height, 0, '#F2EFE9');
+
+  // Header card
+  drawRoundRect(32, 28, 1136, 150, 16, '#FAF8F5', '#D8D2C9');
+  ctx.fillStyle = '#6E685F';
+  ctx.font = '600 13px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(`CardLedger · 信用卡福利追蹤表 · 紀錄日：${trackingDate}`, 54, 58);
+
+  ctx.fillStyle = '#3D3A36';
+  ctx.font = '800 24px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('信用卡福利追蹤表 (Morandi Edition)', 54, 90);
+
+  // 4 KPI Boxes
+  const kpis = [
+    {
+      label: '持卡組合 · 免海外手續費',
+      val: '11 張卡 (7 張免 FTF)',
+      bg: '#E5EAEF',
+      border: '#C5D0DA',
+      color: '#3A4956',
+    },
+    {
+      label: '總年費 vs 總福利',
+      val: `$${stats.totalAnnualFees} / $${stats.totalTrackableCredits}`,
+      bg: '#EFEAD8',
+      border: '#D6CCB0',
+      color: '#574B35',
+    },
+    {
+      label: '已使用 / 已過期失效',
+      val: `$${stats.usedTrackableCredits} / -$${stats.expiredTrackableCredits}`,
+      bg: '#EFE3E1',
+      border: '#D8C0BC',
+      color: '#5E3F3C',
+    },
+    {
+      label: '目前真正剩餘可用',
+      val: `$${stats.remainingTrackableCredits}`,
+      bg: '#E3EBE4',
+      border: '#C2D1C4',
+      color: '#3B4D40',
+    },
+  ];
+
+  kpis.forEach((k, idx) => {
+    const x = 54 + idx * 276;
+    drawRoundRect(x, 108, 260, 54, 10, k.bg, k.border);
+    ctx.fillStyle = k.color;
+    ctx.font = '700 11px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(k.label, x + 14, 128);
+    ctx.fillStyle = '#3D3A36';
+    ctx.font = '800 16px "JetBrains Mono", monospace';
+    ctx.fillText(k.val, x + 14, 150);
+  });
+
+  // Main Tracker Table Card
+  drawRoundRect(32, 196, 1136, 592, 16, '#FAF8F5', '#D8D2C9');
+  ctx.fillStyle = '#3D3A36';
+  ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('年度報銷與免房券追蹤（時序排列 · Google 日曆提醒）', 54, 232);
+
+  // 10 Tracker Rows (2 columns x 5 rows)
+  trackers.slice(0, 10).forEach((item, idx) => {
+    const col = idx % 2;
+    const row = Math.floor(idx / 2);
+    const x = 54 + col * 552;
+    const y = 252 + row * 102;
+    const expired = item.expiredValue || 0;
+    const rem = Math.max(0, item.maxValue - item.usedValue - expired);
+
+    drawRoundRect(x, y, 536, 90, 12, '#F2EFE9', '#D8D2C9');
+
+    ctx.fillStyle = '#635E57';
+    ctx.font = '700 11px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(
+      `${String(idx + 1).padStart(2, '0')}. ${item.cardName} ${
+        item.calendarAlertLabel ? `· 🔔 ${item.calendarAlertLabel}` : ''
+      }`,
+      x + 16,
+      y + 24
+    );
+
+    ctx.fillStyle = '#3D3A36';
+    ctx.font = '800 15px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(item.shortTitle || item.benefitTitle, x + 16, y + 48);
+
+    ctx.fillStyle = '#3B4D40';
+    ctx.font = '700 12px "JetBrains Mono", monospace';
+    ctx.fillText(
+      `已用 $${item.usedValue}  ｜  過期 -$${expired}  ｜  尚餘 $${rem} (總額 $${item.maxValue})`,
+      x + 16,
+      y + 72
+    );
+  });
+
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `cardledger-demo-${trackingDate}.png`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 'image/png');
+}
+
