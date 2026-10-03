@@ -102,6 +102,35 @@ export const PRESET_CALENDAR_ALERTS: CardCalendarAlertRule[] = [
     dates: [{ month: 10, day: 1, label: '10/1' }],
   },
   {
+    id: 'alert-ihg-dining',
+    trackerId: 'trk-ihg-dining',
+    cardName: 'Chase IHG One Rewards Premier',
+    shortCardName: 'IHG',
+    benefitTitle: 'IHG 每季 $25 餐飲折抵',
+    shortLabel: 'IHG 餐飲 $25',
+    scheduleSummary: '1/1 · 4/1 · 7/1 · 10/1',
+    description:
+      'Chase IHG One Rewards Premier — 每季 $25 IHG 飯店餐飲折抵（每季首日 1/1, 4/1, 7/1, 10/1 提醒）',
+    dates: [
+      { month: 1, day: 1, label: '1/1 ($25)', eventTitleSuffix: 'Q1 $25' },
+      { month: 4, day: 1, label: '4/1 ($25)', eventTitleSuffix: 'Q2 $25' },
+      { month: 7, day: 1, label: '7/1 ($25)', eventTitleSuffix: 'Q3 $25' },
+      { month: 10, day: 1, label: '10/1 ($25)', eventTitleSuffix: 'Q4 $25' },
+    ],
+  },
+  {
+    id: 'alert-ihg-air',
+    trackerId: 'trk-ihg-air',
+    cardName: 'Chase IHG One Rewards Premier',
+    shortCardName: 'IHG',
+    benefitTitle: 'IHG 航空直購滿 $250 折 $100',
+    shortLabel: 'IHG 航空 $100',
+    scheduleSummary: '10/1',
+    description:
+      'Chase IHG One Rewards Premier — 官網直購機票滿 $250 折 $100（每年 10/1 年底提醒）',
+    dates: [{ month: 10, day: 1, label: '10/1 ($100)' }],
+  },
+  {
     id: 'alert-ihg-ua',
     trackerId: 'trk-ihg-ua',
     cardName: 'Chase IHG One Rewards Premier',
@@ -168,11 +197,11 @@ export const PRESET_CALENDAR_ALERTS: CardCalendarAlertRule[] = [
     trackerId: 'trk-ihg-fna',
     cardName: 'Chase IHG One Rewards Premier',
     shortCardName: 'IHG',
-    benefitTitle: '周年 40k 免房券',
-    shortLabel: 'IHG 40k 房券',
+    benefitTitle: '周年 50k 免房券',
+    shortLabel: 'IHG 50k 房券',
     scheduleSummary: '9/1',
     description:
-      'Chase IHG One Rewards Premier — 周年 40k 免房券（每年 9/1 提醒）',
+      'Chase IHG One Rewards Premier — 周年 50k 免房券（每年 9/1 提醒）',
     dates: [{ month: 9, day: 1, label: '9/1' }],
   },
   {
@@ -195,17 +224,17 @@ function pad2(n: number): string {
 
 /**
  * Computes the next occurrence date (YYYY-MM-DD) and exclusive end date (+1 day)
- * based on the reference date (defaults to 2026-09-29).
+ * based on the reference date (defaults to 2026-10-03).
  */
 export function getNextOccurrenceDates(
   month: number,
   day: number,
-  referenceDateStr = '2026-09-29'
+  referenceDateStr = '2026-10-03'
 ): { startDate: string; endDate: string; year: number } {
   const [refY, refM, refD] = referenceDateStr.split('-').map(Number);
   const baseYear = refY || 2026;
   const isPastInBaseYear =
-    month < (refM || 9) || (month === (refM || 9) && day < (refD || 29));
+    month < (refM || 10) || (month === (refM || 10) && day < (refD || 3));
   const targetYear = isPastInBaseYear ? baseYear + 1 : baseYear;
 
   const startDate = `${targetYear}-${pad2(month)}-${pad2(day)}`;
@@ -228,7 +257,7 @@ export interface CreatedCalendarEventResult {
 export async function createGoogleCalendarAlertEvents(
   accessToken: string,
   rules: CardCalendarAlertRule[],
-  referenceDateStr = '2026-09-29'
+  referenceDateStr = '2026-10-03'
 ): Promise<CreatedCalendarEventResult[]> {
   const results: CreatedCalendarEventResult[] = [];
 

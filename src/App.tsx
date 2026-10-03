@@ -64,10 +64,10 @@ type ActiveSection =
 type TableComparisonMode = 'corrected' | 'diff';
 type SheetLayoutMode = 'mobile' | 'table';
 
-// Bumped to v3 so the new 10-item chronological order and removed Hyatt $15k FNA take effect immediately
-const STORAGE_KEY_TRACKERS = 'cardledger_benefit_trackers_v3';
-const STORAGE_KEY_SPEND_CAPS = 'cardledger_spend_caps_v3';
-const STORAGE_KEY_SAVED_AT = 'cardledger_last_saved_at_v3';
+// Bumped to v6 for DoorDash sep-pass, oct-not-use scenario
+const STORAGE_KEY_TRACKERS = 'cardledger_benefit_trackers_v6';
+const STORAGE_KEY_SPEND_CAPS = 'cardledger_spend_caps_v6';
+const STORAGE_KEY_SAVED_AT = 'cardledger_last_saved_at_v6';
 const STORAGE_KEY_SYNCED_ALERTS = 'cardledger_synced_calendar_alerts_v1';
 
 // Morandi Palette Themes per Issuer
@@ -138,12 +138,12 @@ export default function App() {
 
   // Global Tracking Date & Save State
   const [globalTrackingDate, setGlobalTrackingDate] =
-    useState<string>('2026-09-29');
+    useState<string>('2026-10-03');
   const [lastSavedTimestamp, setLastSavedTimestamp] = useState<string>(() => {
     try {
-      return localStorage.getItem(STORAGE_KEY_SAVED_AT) || '2026-09-29';
+      return localStorage.getItem(STORAGE_KEY_SAVED_AT) || '2026-10-03';
     } catch {
-      return '2026-09-29';
+      return '2026-10-03';
     }
   });
 
@@ -489,12 +489,12 @@ export default function App() {
   const handleResetTrackersToDefault = () => {
     setTrackers(INITIAL_BENEFIT_TRACKERS);
     setSpendCaps(INITIAL_SPEND_CAP_TRACKERS);
-    setGlobalTrackingDate('2026-09-29');
-    setLastSavedTimestamp('2026-09-29');
+    setGlobalTrackingDate('2026-10-03');
+    setLastSavedTimestamp('2026-10-03');
     setSheetActionBanner({
       type: 'info',
       message:
-        '已重置為 2026/09/29 預設報銷追蹤狀態與最新時序排序。',
+        '已重置為 2026/10/03 最新版本報銷追蹤狀態（含 Chase IHG Premier 最新改版權益）與時序排序。',
     });
   };
 
@@ -624,37 +624,72 @@ export default function App() {
         const expVal = nextMonths
           .filter((m) => m.state === 'expired')
           .reduce((s, m) => s + m.amount, 0);
+        const rem = Math.max(0, item.maxValue - usedVal - expVal);
+        const updatedNotes =
+          item.id === 'trk-csp-doordash'
+            ? `截至 ${globalTrackingDate}：1–8月 ($80) 過期；累計已用 $${usedVal}，尚餘 $${rem} 可用（10月${
+                nextMonths.find((m) => m.month === 10)?.state === 'used'
+                  ? '已使用'
+                  : '可用'
+              }）。`
+            : item.notes;
         return {
           ...item,
           monthlyStates: nextMonths,
           usedValue: usedVal,
           expiredValue: expVal,
           recordedDate: globalTrackingDate,
+          notes: updatedNotes,
           status: computeStatus(usedVal, expVal, item.maxValue),
         };
       })
     );
   };
 
-  // Preset for DoorDash on 2026/09/29: 1-8月 expired ($80), toggle whether 9月 is used ($30 left) or not used ($40 left)
-  const handleSetDoorDashScenario = (sepUsed: boolean) => {
+  // Preset for DoorDash on 2026/10/03: 1-8月 expired ($80)
+  // 'oct-used': 9月 used ($10), 10月 used ($10), remaining $20 (11-12月)
+  // 'oct-avail': 9月 used ($10), 10月 available ($10), remaining $30 (10-12月)
+  // 'sep-expired': 9月 expired ($10), 10月 available ($10), remaining $30 (10-12月)
+  const handleSetDoorDashScenario = (
+    scenario: 'oct-used' | 'oct-avail' | 'sep-expired'
+  ) => {
     setTrackers((prev) =>
       prev.map((item) => {
         if (item.id !== 'trk-csp-doordash' || !item.monthlyStates) return item;
         const nextMonths: BenefitMonthState[] = item.monthlyStates.map((m) => {
           if (m.month <= 8) return { ...m, state: 'expired' };
-          if (m.month === 9)
-            return { ...m, state: sepUsed ? 'used' : 'available' };
+          if (m.month === 9) {
+            return {
+              ...m,
+              state: scenario === 'sep-expired' ? 'expired' : 'used',
+            };
+          }
+          if (m.month === 10) {
+            return {
+              ...m,
+              state: scenario === 'oct-used' ? 'used' : 'available',
+            };
+          }
           return { ...m, state: 'available' };
         });
-        const usedVal = sepUsed ? 10 : 0;
-        const expVal = 80;
+        const usedVal = nextMonths
+          .filter((m) => m.state === 'used')
+          .reduce((s, m) => s + m.amount, 0);
+        const expVal = nextMonths
+          .filter((m) => m.state === 'expired')
+          .reduce((s, m) => s + m.amount, 0);
+        const rem = Math.max(0, item.maxValue - usedVal - expVal);
         return {
           ...item,
-          recordedDate: '2026-09-29',
+          recordedDate: globalTrackingDate,
           monthlyStates: nextMonths,
           usedValue: usedVal,
           expiredValue: expVal,
+          notes: `截至 ${globalTrackingDate}：1–8月 ($80) 已過期；9月${
+            scenario === 'sep-expired' ? '過期' : '已使用 ($10)'
+          }；10月${
+            scenario === 'oct-used' ? '已使用 ($10)' : '當期可用 ($10)'
+          }，尚餘 $${rem} 可用。`,
           status: computeStatus(usedVal, expVal, item.maxValue),
         };
       })
@@ -1822,40 +1857,67 @@ export default function App() {
                           {item.id === 'trk-csp-doordash' ? (
                             <div className="flex items-center justify-between gap-2 flex-wrap">
                               <span className="text-[11px] font-bold text-[#3D3A36]">
-                                每月 $10 狀態點選（1–8月已過期 -$80）：
+                                10月當期狀態切換（1–8月已過期 -$80）：
                               </span>
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    handleSetDoorDashScenario(false)
+                                    handleSetDoorDashScenario('sep-expired')
                                   }
-                                  className={`px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer ${
-                                    remaining === 40
+                                  className={`px-2.5 py-1 text-[10px] font-bold rounded-lg cursor-pointer transition-colors ${
+                                    item.monthlyStates?.find(
+                                      (m) => m.month === 9
+                                    )?.state === 'expired' &&
+                                    item.monthlyStates?.find(
+                                      (m) => m.month === 10
+                                    )?.state === 'available'
                                       ? 'bg-[#5A6B7C] text-[#FAF8F5]'
-                                      : 'bg-[#FAF8F5] border border-[#CFC8BE] text-[#635E57]'
+                                      : 'bg-[#FAF8F5] border border-[#CFC8BE] text-[#635E57] hover:border-[#5A6B7C]'
                                   }`}
                                 >
-                                  9月未用 (剩 $40)
+                                  ✓ 9月過期 · 10月未用 (剩 $30)
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    handleSetDoorDashScenario(true)
+                                    handleSetDoorDashScenario('oct-used')
                                   }
-                                  className={`px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer ${
-                                    remaining === 30
+                                  className={`px-2.5 py-1 text-[10px] font-bold rounded-lg cursor-pointer transition-colors ${
+                                    item.monthlyStates?.find(
+                                      (m) => m.month === 10
+                                    )?.state === 'used'
                                       ? 'bg-[#5C7062] text-[#FAF8F5]'
-                                      : 'bg-[#FAF8F5] border border-[#CFC8BE] text-[#635E57]'
+                                      : 'bg-[#FAF8F5] border border-[#CFC8BE] text-[#635E57] hover:border-[#5C7062]'
                                   }`}
                                 >
-                                  9月已用 (剩 $30)
+                                  10月已使用 (剩 $20)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleSetDoorDashScenario('oct-avail')
+                                  }
+                                  className={`px-2.5 py-1 text-[10px] font-bold rounded-lg cursor-pointer transition-colors ${
+                                    item.monthlyStates?.find(
+                                      (m) => m.month === 9
+                                    )?.state === 'used' &&
+                                    item.monthlyStates?.find(
+                                      (m) => m.month === 10
+                                    )?.state === 'available'
+                                      ? 'bg-[#6B8071] text-[#FAF8F5]'
+                                      : 'bg-[#FAF8F5] border border-[#CFC8BE] text-[#635E57] hover:border-[#6B8071]'
+                                  }`}
+                                >
+                                  9月已用 · 10月未用 (剩 $30)
                                 </button>
                               </div>
                             </div>
                           ) : (
                             <div className="text-[11px] font-bold text-[#635E57]">
-                              點擊切換上下半年使用狀態（可用 → 已用 → 過期）：
+                              {item.monthlyStates.length === 4
+                                ? '點擊切換每季使用狀態（可用 → 已用 → 過期）：'
+                                : '點擊切換各期使用狀態（可用 → 已用 → 過期）：'}
                             </div>
                           )}
 
@@ -1863,6 +1925,8 @@ export default function App() {
                             className={
                               item.monthlyStates.length === 2
                                 ? 'grid grid-cols-2 gap-2'
+                                : item.monthlyStates.length === 4
+                                ? 'grid grid-cols-2 sm:grid-cols-4 gap-2'
                                 : 'grid grid-cols-6 sm:grid-cols-12 gap-1'
                             }
                           >

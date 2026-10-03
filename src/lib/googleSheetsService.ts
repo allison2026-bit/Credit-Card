@@ -66,7 +66,7 @@ function buildTab2Rows(trackers: BenefitTrackerItem[]): (string | number)[][] {
   const rows = trackers.map((t, idx) => {
     const rowNum = idx + 2;
     return [
-      t.recordedDate || '2026-09-29',
+      t.recordedDate || '2026-10-03',
       t.status,
       `${t.cardName} — ${t.shortTitle || t.benefitTitle}`,
       t.maxValue,
@@ -81,7 +81,7 @@ function buildTab2Rows(trackers: BenefitTrackerItem[]): (string | number)[][] {
 
   const lastDataRow = rows.length + 1;
   const totalRow = [
-    '2026-09-29',
+    '2026-10-03',
     '合計',
     '年度可追蹤福利總計',
     `=SUM(D2:D${lastDataRow})`,
@@ -233,7 +233,7 @@ export function downloadAppDemoScreenshotPNG(
   }
 ): void {
   const width = 1200;
-  const height = 820;
+  const height = 910;
   const scale = 2;
   const canvas = document.createElement('canvas');
   canvas.width = width * scale;
@@ -319,21 +319,21 @@ export function downloadAppDemoScreenshotPNG(
   });
 
   // Main Tracker Table Card
-  drawRoundRect(32, 196, 1136, 592, 16, '#FAF8F5', '#D8D2C9');
+  drawRoundRect(32, 196, 1136, 686, 16, '#FAF8F5', '#D8D2C9');
   ctx.fillStyle = '#3D3A36';
   ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
   ctx.fillText('年度報銷與免房券追蹤（時序排列 · Google 日曆提醒）', 54, 232);
 
-  // 10 Tracker Rows (2 columns x 5 rows)
-  trackers.slice(0, 10).forEach((item, idx) => {
+  // 12 Tracker Rows (2 columns x 6 rows)
+  trackers.slice(0, 12).forEach((item, idx) => {
     const col = idx % 2;
     const row = Math.floor(idx / 2);
     const x = 54 + col * 552;
-    const y = 252 + row * 102;
+    const y = 252 + row * 100;
     const expired = item.expiredValue || 0;
     const rem = Math.max(0, item.maxValue - item.usedValue - expired);
 
-    drawRoundRect(x, y, 536, 90, 12, '#F2EFE9', '#D8D2C9');
+    drawRoundRect(x, y, 536, 88, 12, '#F2EFE9', '#D8D2C9');
 
     ctx.fillStyle = '#635E57';
     ctx.font = '700 11px "Plus Jakarta Sans", sans-serif';
@@ -354,7 +354,7 @@ export function downloadAppDemoScreenshotPNG(
     ctx.fillText(
       `已用 $${item.usedValue}  ｜  過期 -$${expired}  ｜  尚餘 $${rem} (總額 $${item.maxValue})`,
       x + 16,
-      y + 72
+      y + 70
     );
   });
 
