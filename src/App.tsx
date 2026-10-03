@@ -27,6 +27,7 @@ import {
   LogOut,
   ExternalLink,
   Camera,
+  Settings,
 } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import {
@@ -55,12 +56,14 @@ import {
   createGoogleCalendarAlertEvents,
   getNextOccurrenceDates,
 } from './lib/googleCalendarService';
+import { MonthlyAutomationSection } from './components/MonthlyAutomationSection';
 
 type ActiveSection =
   | 'audit-table'
   | 'benefit-tracker'
   | 'spend-caps'
-  | 'category-guide';
+  | 'category-guide'
+  | 'monthly-automation';
 type TableComparisonMode = 'corrected' | 'diff';
 type SheetLayoutMode = 'mobile' | 'table';
 
@@ -786,6 +789,7 @@ export default function App() {
             { id: 'benefit-tracker', label: '報銷追蹤' },
             { id: 'spend-caps', label: '季度與滿額' },
             { id: 'category-guide', label: '刷卡攻略' },
+            { id: 'monthly-automation', label: '自動排程發布' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -803,6 +807,20 @@ export default function App() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveSection('monthly-automation')}
+            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
+              activeSection === 'monthly-automation'
+                ? 'bg-[#5C7062] text-[#FAF8F5] border-[#5C7062]'
+                : 'text-[#3D3A36] bg-[#EAE5DF] border-[#CFC8BE] hover:bg-[#DDD8D1]'
+            }`}
+            title="每月自動更新信用卡權益與自動發布設定"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">排程發布</span>
+          </button>
+
           <button
             type="button"
             onClick={() => {
@@ -979,7 +997,7 @@ export default function App() {
           </div>
 
           {/* Mobile Section Switcher in Morandi Tones */}
-          <div className="grid grid-cols-4 gap-1.5 pt-3.5 mt-3.5 border-t border-[#E6E1D9] md:hidden">
+          <div className="grid grid-cols-5 gap-1 pt-3.5 mt-3.5 border-t border-[#E6E1D9] md:hidden">
             {[
               { id: 'audit-table', label: '權益總表', color: 'bg-[#5A6B7C]' },
               {
@@ -992,6 +1010,11 @@ export default function App() {
                 id: 'category-guide',
                 label: '刷卡攻略',
                 color: 'bg-[#736479]',
+              },
+              {
+                id: 'monthly-automation',
+                label: '排程發布',
+                color: 'bg-[#5C7062]',
               },
             ].map((tab) => (
               <button
@@ -2311,12 +2334,24 @@ export default function App() {
             </div>
           </section>
         )}
+
+        {/* =========================================================
+            SECTION 5: 每月自動更新與發布設定 (MONTHLY AUTOMATION & PUBLISHING)
+           ========================================================= */}
+        {activeSection === 'monthly-automation' && (
+          <MonthlyAutomationSection
+            trackers={trackers}
+            spendCaps={spendCaps}
+            globalTrackingDate={globalTrackingDate}
+            onShowBanner={setSheetActionBanner}
+          />
+        )}
       </main>
 
       {/* Fixed Bottom Thumb-Zone Navigation Bar on Mobile (Morandi Styled) */}
       <nav
         aria-label="手機底部導覽列"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-t border-[#D8D2C9] grid grid-cols-4 items-center h-14 px-1"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-t border-[#D8D2C9] grid grid-cols-5 items-center h-14 px-1"
       >
         {[
           {
@@ -2342,6 +2377,12 @@ export default function App() {
             label: '刷卡攻略',
             icon: Compass,
             activeColor: 'text-[#4B3F50]',
+          },
+          {
+            id: 'monthly-automation',
+            label: '排程發布',
+            icon: Settings,
+            activeColor: 'text-[#5C7062]',
           },
         ].map((item) => {
           const IconComponent = item.icon;
